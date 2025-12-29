@@ -8,6 +8,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Public URL detection logic:
+# When deployed in headless mode (STREAMLIT_SERVER_HEADLESS=true), construct the base URL using HTTPS and the host from the Streamlit request.
+# This ensures the app uses the correct public URL for sharing links in production.
+# In local development, default to http://localhost:8501.
+if os.getenv('STREAMLIT_SERVER_HEADLESS') == 'true':
+    base_url = f"https://{st.request.host}"
+else:
+    base_url = "http://localhost:8501"
+
 def generate_token_for_room(room_name):
     """
     Generates a JWT token for joining a LiveKit Cloud room with a specific room name.
@@ -73,20 +82,25 @@ def stop_recording(egress_id):
 
 st.title("LiveKit Video Call App")
 
-# Handle URL query parameters
+# Join-via-link behavior:
+# Parse the URL query parameters to check for a 'room' parameter.
+# If present, set the room name from the URL and flag it as coming from the URL.
+# This allows users to join a specific room directly by clicking a shared link, bypassing the room creation step.
 query_params = st.query_params
 if 'room' in query_params:
     st.session_state.room = query_params['room']
+    st.session_state.room_from_url = True
 
 # Create Room button
-if st.button("Create Room"):
-    room_name = str(uuid.uuid4())
-    st.session_state.room = room_name
+if not st.session_state.get('room_from_url', False):
+    if st.button("Create Room"):
+        room_name = str(uuid.uuid4())
+        st.session_state.room = room_name
 
 # Display room name and shareable link if room exists
 if 'room' in st.session_state:
     st.write(f"Room Name: {st.session_state.room}")
-    link = f"http://localhost:8501/?room={st.session_state.room}"
+    link = f"{base_url}/?room={st.session_state.room}"
     st.write(f"Shareable Link: {link}")
 
     # Copy Link button using HTML component
