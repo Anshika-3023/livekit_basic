@@ -8,14 +8,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Public URL detection logic:
-# When deployed in headless mode (STREAMLIT_SERVER_HEADLESS=true), construct the base URL using HTTPS and the host from the Streamlit request.
-# This ensures the app uses the correct public URL for sharing links in production.
-# In local development, default to http://localhost:8501.
-if os.getenv('STREAMLIT_SERVER_HEADLESS') == 'true':
-    base_url = f"https://{st.request.host}"
-else:
-    base_url = "http://localhost:8501"
+def get_base_url():
+    """
+    Returns the base URL for the app.
+    Checks for PUBLIC_BASE_URL environment variable (for Streamlit Secrets),
+    falling back to 'http://localhost:8501' for local development.
+    """
+    return os.getenv('PUBLIC_BASE_URL') or 'http://localhost:8501'
 
 def generate_token_for_room(room_name):
     """
@@ -100,7 +99,7 @@ if not st.session_state.get('room_from_url', False):
 # Display room name and shareable link if room exists
 if 'room' in st.session_state:
     st.write(f"Room Name: {st.session_state.room}")
-    link = f"{base_url}/?room={st.session_state.room}"
+    link = f"{get_base_url()}/?room={st.session_state.room}"
     st.write(f"Shareable Link: {link}")
 
     # Copy Link button using HTML component
