@@ -1,3 +1,6 @@
 streamlit
-livekit
 python-dotenv
+livekit
+livekit-api
+pyjwt
+requests
